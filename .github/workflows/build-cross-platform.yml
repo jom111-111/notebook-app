@@ -171,6 +171,24 @@ jobs:
         name: notebook-macos
         path: ./artifacts/macos/
         
+    - name: List downloaded files
+      run: |
+        echo "Windows artifacts:"
+        ls -la ./artifacts/windows/
+        echo "macOS artifacts:"
+        ls -la ./artifacts/macos/
+        
+    - name: Rename macOS files to English
+      run: |
+        cd ./artifacts/macos/
+        if [ -f "记事本.app.tar.gz" ]; then
+          mv "记事本.app.tar.gz" "notebook-macos.app.tar.gz"
+        fi
+        if [ -f "记事本桌面版" ]; then
+          mv "记事本桌面版" "notebook-macos-executable"
+        fi
+        ls -la
+        
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
@@ -178,8 +196,8 @@ jobs:
         name: Notebook App v${{ github.run_number }}
         files: |
           artifacts/windows/notebook.exe
-          artifacts/macos/记事本.app.tar.gz
-          artifacts/macos/记事本桌面版
+          artifacts/macos/notebook-macos.app.tar.gz
+          artifacts/macos/notebook-macos-executable
         body: |
           ## Notebook Application Cross-Platform Release
           
@@ -191,19 +209,19 @@ jobs:
           - Usage: Download and double-click to run
           - Data stored in %USERPROFILE%\.notebook_app\
           
-          ### macOS Version (记事本.app.tar.gz / 记事本桌面版)
+          ### macOS Version (notebook-macos.app.tar.gz / notebook-macos-executable)
           - Native macOS application bundle
           - User data isolation  
           - Modern dark theme
           - Full Chinese language support
           - Usage: 
-            - For .app.tar.gz: Extract and drag to Applications folder
-            - For 记事本桌面版: Download and run directly
+            - For notebook-macos.app.tar.gz: Extract and drag to Applications folder
+            - For notebook-macos-executable: Download and run directly
           - Data stored in ~/.notebook_app/
           
           ### Installation
           - **Windows**: Download notebook.exe and run directly
-          - **macOS**: Download 记事本.app.tar.gz (extract first) or 记事本桌面版 and run directly
+          - **macOS**: Download notebook-macos.app.tar.gz (extract first) or notebook-macos-executable and run directly
         make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
