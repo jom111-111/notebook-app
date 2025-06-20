@@ -148,6 +148,12 @@ jobs:
           dist/记事本.app
           dist/记事本桌面版
         
+    - name: Package macOS app
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd dist
+        tar -czf 记事本.app.tar.gz 记事本.app
+        
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v2
@@ -156,7 +162,7 @@ jobs:
         name: Notebook App v${{ github.run_number }}
         files: |
           dist/notebook.exe
-          dist/记事本.app
+          dist/记事本.app.tar.gz
           dist/记事本桌面版
         body: |
           ## Notebook Application Cross-Platform Release
