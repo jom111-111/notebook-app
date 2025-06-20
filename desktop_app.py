@@ -10,11 +10,14 @@ from pathlib import Path
 import webview
 from flask import Flask
 
-# Fix Windows encoding issues
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+# Safe print function for Windows compatibility
+def safe_print(message):
+    """Print function that handles encoding issues on Windows"""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        # Fallback: print ASCII-safe version
+        print(message.encode('ascii', 'ignore').decode('ascii'))
 
 # 添加当前目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -73,7 +76,7 @@ class NotebookApp:
         self.port = self.find_free_port()
         self.app = self.create_flask_app()
         
-        print("Flask server starting on port " + str(self.port))
+        safe_print("Flask server starting on port " + str(self.port))
         
         # 在新线程中启动Flask
         flask_thread = threading.Thread(
@@ -113,11 +116,11 @@ class NotebookApp:
 
 def main():
     """Main function"""
-    print("Notebook desktop application starting...")
+    safe_print("Notebook desktop application starting...")
     
     # Check user data directory
     user_data_dir = Path.home() / '.notebook_app'
-    print("User data directory: " + str(user_data_dir))
+    safe_print("User data directory: " + str(user_data_dir))
     
     try:
         # Create application instance
@@ -126,15 +129,18 @@ def main():
         # Create window
         window = app.create_window()
         
-        print("Desktop window created successfully")
-        print("If window doesn't open automatically, please check firewall settings")
+        safe_print("Desktop window created successfully")
+        safe_print("If window doesn't open automatically, please check firewall settings")
         
         # Start GUI event loop
         webview.start(debug=False)
         
     except Exception as e:
-        print("Startup failed: " + str(e))
-        input("Press Enter to exit...")
+        safe_print("Startup failed: " + str(e))
+        try:
+            input("Press Enter to exit...")
+        except:
+            pass
         sys.exit(1)
 
 if __name__ == '__main__':
