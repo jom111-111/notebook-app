@@ -100,17 +100,25 @@ class NotebookApp:
         url = self.start_flask_server()
         
         # Create desktop window
-        window = webview.create_window(
-            title='Notebook App',
-            url=url,
-            width=1200,
-            height=800,
-            min_size=(800, 600),
-            resizable=True,
-            maximized=False,
-            on_top=False,
-            shadow=True
-        )
+        try:
+            # Try with full parameters first
+            window = webview.create_window(
+                title='Notebook App',
+                url=url,
+                width=1200,
+                height=800,
+                min_size=(800, 600),
+                resizable=True
+            )
+        except TypeError as e:
+            safe_print("Window creation with full params failed: " + str(e))
+            # Fallback to basic parameters
+            window = webview.create_window(
+                title='Notebook App',
+                url=url,
+                width=1200,
+                height=800
+            )
         
         return window
 
