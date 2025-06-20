@@ -49,7 +49,7 @@ class NotebookApp:
         return port
 
     def create_flask_app(self):
-        """Create Flask application"""
+        """Create Flask application with optimized initialization"""
         app = Flask(__name__)
         app.config.from_object(Config)
         
@@ -59,9 +59,21 @@ class NotebookApp:
         # 注册蓝图
         app.register_blueprint(api)
         
-        # 创建数据库表
+        # Lazy database table creation - only create if not exists
         with app.app_context():
-            db.create_all()
+            try:
+                # Quick check if tables exist
+                from sqlalchemy import inspect
+                inspector = inspect(db.engine)
+                if not inspector.has_table('notes'):
+                    safe_print("Creating database tables...")
+                    db.create_all()
+                    safe_print("Database tables created")
+                else:
+                    safe_print("Database tables already exist")
+            except Exception as e:
+                safe_print("Database initialization: " + str(e))
+                db.create_all()  # Fallback
         
         @app.route('/')
         def index():
@@ -71,8 +83,26 @@ class NotebookApp:
         
         return app
 
+    def wait_for_server(self, url, timeout=10):
+        """Wait for Flask server to be ready with smart detection"""
+        import requests
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                response = requests.get(url, timeout=1)
+                if response.status_code == 200:
+                    safe_print("Flask server ready in " + str(round(time.time() - start_time, 2)) + " seconds")
+                    return True
+            except:
+                pass
+            time.sleep(0.1)  # Check every 100ms instead of waiting 2 seconds
+        
+        safe_print("Warning: Server readiness check timeout")
+        return False
+
     def start_flask_server(self):
-        """Start Flask server"""
+        """Start Flask server with optimized startup"""
         self.port = self.find_free_port()
         self.app = self.create_flask_app()
         
@@ -91,9 +121,10 @@ class NotebookApp:
         flask_thread.daemon = True
         flask_thread.start()
         
-        # Wait for server to start
-        time.sleep(2)
-        return 'http://127.0.0.1:' + str(self.port)
+        # Smart server readiness detection instead of fixed 2-second wait
+        url = 'http://127.0.0.1:' + str(self.port)
+        self.wait_for_server(url)
+        return url
 
     def create_window(self):
         """Create desktop window"""
