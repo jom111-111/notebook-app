@@ -10,6 +10,9 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - uses: actions/checkout@v4
@@ -41,24 +44,24 @@ jobs:
         
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ github.run_number }}
-        name: 记事本应用 v${{ github.run_number }}
-        files: |
-          dist/notebook.exe
+        name: Notebook App v${{ github.run_number }}
+        files: dist/notebook.exe
         body: |
-          ## 📝 记事本应用 Windows版本
+          ## Notebook Application Windows Version
           
-          ### ✨ 特性
-          - 🖥️ 独立运行，无需安装Python
-          - 🔒 用户数据隔离
-          - 🎨 现代深色主题
-          - 🇨🇳 完整中文支持
+          ### Features
+          - Standalone executable, no Python installation required
+          - User data isolation
+          - Modern dark theme
+          - Full Chinese language support
           
-          ### 📥 使用方法
-          1. 下载 `记事本.exe`
-          2. 双击运行即可
-          3. 数据存储在 `%USERPROFILE%\.notebook_app\`
+          ### Usage
+          1. Download notebook.exe
+          2. Double-click to run
+          3. Data stored in %USERPROFILE%\.notebook_app\
+        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
