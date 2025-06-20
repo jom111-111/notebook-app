@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-便签精灵桌面应用
-使用pywebview创建独立窗口
-"""
 
 import os
 import sys
@@ -13,6 +9,12 @@ import socket
 from pathlib import Path
 import webview
 from flask import Flask
+
+# Fix Windows encoding issues
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # 添加当前目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +38,7 @@ class NotebookApp:
         self.port = None
         
     def find_free_port(self):
-        """找到一个可用的端口"""
+        """Find an available port"""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(('localhost', 0))
             s.listen(1)
@@ -44,7 +46,7 @@ class NotebookApp:
         return port
 
     def create_flask_app(self):
-        """创建Flask应用"""
+        """Create Flask application"""
         app = Flask(__name__)
         app.config.from_object(Config)
         
@@ -60,18 +62,18 @@ class NotebookApp:
         
         @app.route('/')
         def index():
-            """主页面"""
+            """Main page"""
             from flask import render_template
             return render_template('index.html')
         
         return app
 
     def start_flask_server(self):
-        """启动Flask服务器"""
+        """Start Flask server"""
         self.port = self.find_free_port()
         self.app = self.create_flask_app()
         
-        print(f"🚀 Flask服务器启动在端口 {self.port}")
+        print("Flask server starting on port " + str(self.port))
         
         # 在新线程中启动Flask
         flask_thread = threading.Thread(
@@ -86,17 +88,17 @@ class NotebookApp:
         flask_thread.daemon = True
         flask_thread.start()
         
-        # 等待服务器启动
+        # Wait for server to start
         time.sleep(2)
-        return f'http://127.0.0.1:{self.port}'
+        return 'http://127.0.0.1:' + str(self.port)
 
     def create_window(self):
-        """创建桌面窗口"""
+        """Create desktop window"""
         url = self.start_flask_server()
         
-        # 创建桌面窗口
+        # Create desktop window
         window = webview.create_window(
-            title='✨ 便签精灵',
+            title='Notebook App',
             url=url,
             width=1200,
             height=800,
@@ -110,29 +112,29 @@ class NotebookApp:
         return window
 
 def main():
-    """主函数"""
-    print("🚀 便签精灵桌面应用启动中...")
+    """Main function"""
+    print("Notebook desktop application starting...")
     
-    # 检查用户数据目录
+    # Check user data directory
     user_data_dir = Path.home() / '.notebook_app'
-    print(f"📁 用户数据目录: {user_data_dir}")
+    print("User data directory: " + str(user_data_dir))
     
     try:
-        # 创建应用实例
+        # Create application instance
         app = NotebookApp()
         
-        # 创建窗口
+        # Create window
         window = app.create_window()
         
-        print("✅ 桌面窗口已创建")
-        print("💡 如果窗口没有自动打开，请检查防火墙或安全设置")
+        print("Desktop window created successfully")
+        print("If window doesn't open automatically, please check firewall settings")
         
-        # 启动GUI事件循环
+        # Start GUI event loop
         webview.start(debug=False)
         
     except Exception as e:
-        print(f"❌ 启动失败: {e}")
-        input("按回车键退出...")
+        print("Startup failed: " + str(e))
+        input("Press Enter to exit...")
         sys.exit(1)
 
 if __name__ == '__main__':
