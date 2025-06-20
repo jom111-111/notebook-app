@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}便签精灵 - 主页{% endblock %}
+
+{% block content %}
+<!-- 顶部导航栏 -->
+<nav class="modern-navbar">
+    <div class="navbar-content">
+        <div class="navbar-brand">
+            <div class="brand-icon">
+                <i class="fas fa-sticky-note"></i>
+            </div>
+            <span class="brand-text">便签精灵</span>
+        </div>
+        
+        <div class="navbar-actions">
+            <button class="modern-btn primary" id="newNoteBtn">
+                <i class="fas fa-plus"></i>
+                <span>新建笔记</span>
+                <div class="btn-glow"></div>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容区域 -->
+<div class="container-fluid">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+                <!-- 搜索框 -->
+                <div class="search-container">
+                    <div class="modern-search-box">
+                        <div class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <input type="text" class="modern-search-input" id="searchInput" placeholder="搜索你的笔记...">
+                        <button class="search-clear" id="searchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 筛选选项 -->
+                <div class="p-3 border-bottom">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action active" data-filter="all">
+                            <i class="fas fa-file-alt me-2"></i>全部笔记
+                            <span class="badge bg-primary rounded-pill float-end" id="totalCount">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" data-filter="favorite">
+                            <i class="fas fa-star me-2"></i>收藏笔记
+                            <span class="badge bg-warning rounded-pill float-end" id="favoriteCount">0</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 标签列表 -->
+                <div class="tags-container">
+                    <div class="tags-header">
+                        <div class="tags-title">
+                            <i class="fas fa-tags"></i>
+                            <span>标签分类</span>
+                        </div>
+                        <div class="tags-header-actions">
+                            <button class="tags-search-toggle" id="tagsSearchToggle" title="搜索标签">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <div class="tags-count" id="tagsCount">0</div>
+                        </div>
+                    </div>
+                    <div class="tags-body">
+                        <div class="tags-search-container" id="tagsSearchContainer">
+                            <div class="tags-search-box">
+                                <div class="tags-search-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <input type="text" class="tags-search-input" id="tagsSearchInput" placeholder="搜索标签...">
+                                <button class="tags-search-clear" id="tagsSearchClear" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="tags-search-close" id="tagsSearchClose" title="关闭搜索">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tags-content">
+                            <div id="tagsList" class="tags-list">
+                                <!-- 标签会动态加载 -->
+                                <div class="no-tags">
+                                    <i class="fas fa-tag"></i>
+                                    <span>暂无标签</span>
+                                </div>
+                            </div>
+                            <div class="tags-no-results" id="tagsNoResults" style="display: none;">
+                                <i class="fas fa-search"></i>
+                                <span>未找到匹配的标签</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    </div>
+    
+    <!-- 笔记列表 -->
+    <div class="notes-list">
+                <!-- 笔记列表头部 -->
+                <div class="p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">笔记列表</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-sort"></i>
+                                排序
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-sort="updated">
+                                    <i class="fas fa-clock"></i>
+                                    最近修改
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-sort="created">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    创建时间
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-sort="title">
+                                    <i class="fas fa-sort-alpha-down"></i>
+                                    标题排序
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 笔记列表内容 -->
+                <div id="notesList" class="notes-list-content">
+                    <div class="text-center p-4 text-muted">
+                        <i class="fas fa-sticky-note fa-3x mb-3"></i>
+                        <p>暂无笔记，点击"新建笔记"开始记录吧！</p>
+                    </div>
+                </div>
+    </div>
+    
+    <!-- 编辑器区域 -->
+    <div class="editor-area">
+        <!-- 编辑器欢迎界面 -->
+        <div class="editor-welcome" id="welcomeScreen">
+            <div class="welcome-content">
+                <div class="welcome-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h3 class="welcome-title">选择一个笔记开始编辑</h3>
+                <p class="welcome-subtitle">或者点击"新建笔记"创建新的内容</p>
+                <div class="welcome-actions">
+                    <button class="welcome-btn primary" id="welcomeNewBtn">
+                        <i class="fas fa-plus"></i>
+                        <span>新建笔记</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 编辑器主体 -->
+        <div class="editor-main" id="editorMain" style="display: none;">
+            <!-- 编辑器头部 -->
+            <div class="editor-header">
+                <div class="editor-info">
+                    <div class="editing-indicator">
+                        <div class="indicator-dot"></div>
+                        <span>正在编辑</span>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="action-btn save" id="saveBtn" title="保存笔记 (Ctrl+S)">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="action-btn favorite" id="favoriteBtn" title="收藏笔记">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <button class="action-btn delete" id="deleteBtn" title="删除笔记">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <div class="save-status" id="saveStatus">未保存</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 编辑器内容 -->
+            <div class="editor-content">
+                <!-- 标题输入 -->
+                <div class="title-section">
+                    <div class="title-input-wrapper">
+                        <input type="text" class="title-input" id="noteTitle" placeholder="输入笔记标题..." maxlength="100">
+                        <div class="title-label">
+                            <i class="fas fa-heading"></i>
+                            <span>标题</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标签输入 -->
+                <div class="tags-section">
+                    <div class="tags-input-wrapper">
+                        <i class="fas fa-tags tags-icon"></i>
+                        <input type="text" class="tags-input" id="noteTags" placeholder="输入标签名称，按右边的加号创建标签；创建后，鼠标悬浮于标签即可点击删除该标签">
+                        <button type="button" class="add-tag-btn" id="addTagBtn" title="添加标签">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="tags-preview" id="tagsPreview"></div>
+                </div>
+                
+                <!-- 内容编辑 -->
+                <div class="content-section">
+                    <div class="content-tools">
+                        <div class="tools-left">
+                            <button class="tool-btn" id="wordWrapBtn" title="自动换行" data-active="true">
+                                <i class="fas fa-align-justify"></i>
+                            </button>
+                            <button class="tool-btn" id="lineNumberBtn" title="显示行号">
+                                <i class="fas fa-list-ol"></i>
+                            </button>
+                        </div>
+                        <div class="tools-right">
+                            <div class="editor-stats">
+                                <span class="stat-item">
+                                    <i class="fas fa-font"></i>
+                                    <span id="charCount">0</span>字符
+                                </span>
+                                <span class="stat-item">
+                                    <i class="fas fa-list-ol"></i>
+                                    <span id="lineCount">1</span>行
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-editor">
+                        <textarea class="content-textarea" id="noteContent" placeholder="开始记录你的想法..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 状态栏 -->
+<div class="status-bar">
+    <div class="status-content">
+        <div class="status-left">
+            <div class="status-indicator">
+                <div class="indicator-dot"></div>
+                <span class="status-text">系统运行正常</span>
+            </div>
+        </div>
+        <div class="status-center">
+            <div class="brand-footer">
+                <i class="fas fa-sticky-note"></i>
+                <span>记事本工具</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="current-time" id="currentTime"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认删除笔记模态框 -->
+<div class="custom-modal" id="deleteModal" style="display: none;">
+    <div class="custom-modal-overlay"></div>
+    <div class="custom-modal-content delete-note-modal">
+        <div class="custom-modal-header delete-modal">
+            <div class="modal-icon delete-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h3 class="modal-title">删除笔记</h3>
+        </div>
+        <div class="custom-modal-body">
+            <p>确定要删除这篇笔记吗？</p>
+            <p class="note-title-preview" id="deleteNoteTitle">笔记标题</p>
+            <p class="modal-subtitle">此操作无法撤销，笔记将永久删除</p>
+        </div>
+        <div class="custom-modal-footer">
+            <button class="custom-btn cancel" id="cancelDeleteBtn">
+                <i class="fas fa-times"></i>
+                <span>取消</span>
+            </button>
+            <button class="custom-btn confirm delete-btn" id="confirmDeleteBtn">
+                <i class="fas fa-trash"></i>
+                <span>删除笔记</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 确认删除标签弹窗 -->
+<div class="custom-modal" id="tagDeleteModal" style="display: none;">
+    <div class="custom-modal-overlay"></div>
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-title">删除标签</h3>
+        </div>
+        <div class="custom-modal-body">
+            <p>确定要删除标签 <span class="tag-name" id="tagToDelete"></span> 吗？</p>
+            <p class="modal-subtitle">此操作无法撤销</p>
+        </div>
+        <div class="custom-modal-footer">
+            <button class="custom-btn cancel" id="cancelTagDelete">
+                <i class="fas fa-times"></i>
+                <span>取消</span>
+            </button>
+            <button class="custom-btn confirm" id="confirmTagDelete">
+                <i class="fas fa-trash"></i>
+                <span>删除</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 确认保存笔记弹窗 -->
+<div class="custom-modal" id="saveConfirmModal" style="display: none;">
+    <div class="custom-modal-overlay"></div>
+    <div class="custom-modal-content">
+        <div class="custom-modal-header save-modal">
+            <div class="modal-icon save-icon">
+                <i class="fas fa-save"></i>
+            </div>
+            <h3 class="modal-title">保存笔记</h3>
+        </div>
+        <div class="custom-modal-body">
+            <p>当前笔记有未保存的修改</p>
+            <p class="modal-subtitle">是否要保存当前笔记？</p>
+        </div>
+        <div class="custom-modal-footer">
+            <button class="custom-btn cancel" id="dontSaveBtn">
+                <i class="fas fa-times"></i>
+                <span>不保存</span>
+            </button>
+            <button class="custom-btn secondary" id="cancelSaveBtn">
+                <i class="fas fa-ban"></i>
+                <span>取消</span>
+            </button>
+            <button class="custom-btn confirm save-btn" id="saveAndContinueBtn">
+                <i class="fas fa-save"></i>
+                <span>保存</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %} 

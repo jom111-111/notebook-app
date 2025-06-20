@@ -1,0 +1,91 @@
+name: Build Windows App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow pywebview
+    
+    - name: Create Windows icon
+      run: |
+        python -c "
+        from PIL import Image, ImageDraw
+        size = 64
+        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        margin = 8
+        paper_color = '#FFD700'
+        shadow_color = '#B8860B'
+        shadow_rect = [margin+2, margin+2, size-margin+2, size-margin+2]
+        draw.rounded_rectangle(shadow_rect, radius=4, fill=shadow_color)
+        paper_rect = [margin, margin, size-margin, size-margin]
+        draw.rounded_rectangle(paper_rect, radius=4, fill=paper_color)
+        draw.rounded_rectangle(paper_rect, radius=4, outline='#DAA520', width=2)
+        line_color = '#CD853F'
+        for i in range(3):
+            y = margin + 12 + i * 8
+            draw.line([margin+6, y, size-margin-6, y], fill=line_color, width=1)
+        text_color = '#8B4513'
+        for i in range(2):
+            y = margin + 16 + i * 8
+            for j in range(4):
+                x = margin + 8 + j * 6
+                draw.ellipse([x, y, x+2, y+2], fill=text_color)
+        sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
+        images = [img.resize(ico_size, Image.Resampling.LANCZOS) for ico_size in sizes]
+        images[0].save('记事本.ico', format='ICO', sizes=[(img.width, img.height) for img in images])
+        print('Windows图标已创建')
+        "
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller 记事本_windows.spec --clean --noconfirm
+    
+    - name: Upload Windows executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: notebook-windows-exe
+        path: dist/记事本.exe
+        
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: 记事本应用 v${{ github.run_number }}
+        files: |
+          dist/记事本.exe
+        body: |
+          ## 📝 记事本应用 Windows版本
+          
+          ### ✨ 特性
+          - 🖥️ 独立运行，无需安装Python
+          - 🔒 用户数据隔离
+          - 🎨 现代深色主题
+          - 🇨🇳 完整中文支持
+          
+          ### 📥 使用方法
+          1. 下载 `记事本.exe`
+          2. 双击运行即可
+          3. 数据存储在 `%USERPROFILE%\.notebook_app\`
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
