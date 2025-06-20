@@ -1,23 +1,62 @@
-# 记事本工具
+# 记事本桌面应用
 
-一个基于Flask+HTML/CSS/JavaScript的现代化记事本Web应用。
+一个现代化的跨平台桌面记事本应用，基于Flask + PyWebView开发，提供原生桌面体验。
 
-## 功能特性
+## 🚀 快速下载
 
-- ✨ **现代化界面**: 基于Bootstrap 5的响应式设计
+### 📥 直接下载使用
+
+前往 [GitHub Releases](https://github.com/jom111-111/notebook-app/releases/latest) 下载最新版本：
+
+#### Windows 用户
+- 下载 `notebook.exe` (约20MB)
+- 双击即可运行，无需安装Python环境
+
+#### macOS 用户
+- 下载 `notebook-macos.app.tar.gz` (约17MB) - 完整应用包
+- 或下载 `notebook-macos-executable` (约17MB) - 直接可执行文件
+- 解压后即可使用
+
+## ✨ 功能特性
+
+- 🖥️ **原生桌面应用**: 基于PyWebView的真正桌面应用体验
+- 🌍 **跨平台支持**: Windows和macOS原生支持
 - 📝 **笔记管理**: 创建、编辑、删除笔记
-- 🔍 **搜索功能**: 全文搜索，快速找到需要的笔记
+- 🔍 **全文搜索**: 快速找到需要的笔记内容
 - 🏷️ **标签系统**: 为笔记添加标签，便于分类管理
 - ⭐ **收藏功能**: 标记重要笔记
-- 🌙 **深色主题**: 支持暗主题
+- 🌙 **深色主题**: 现代化的深色界面设计
 - 💾 **自动保存**: 每30秒自动保存编辑内容
 - ⌨️ **快捷键**: 支持Ctrl+S保存、Ctrl+N新建等快捷键
-- 📱 **响应式**: 完美支持PC和移动端
+- 📱 **响应式**: 界面自适应不同窗口尺寸
+- 🔒 **数据隔离**: 每个用户的数据独立存储
+- 🚀 **即开即用**: 绿色软件，无需安装
 
-## 快速开始
+## 📦 数据存储
 
-### 1. 安装依赖
+### Windows
+```
+%USERPROFILE%\.notebook_app\notes.db
+```
 
+### macOS/Linux
+```
+~/.notebook_app/notes.db
+```
+
+用户数据安全地存储在用户主目录中，多用户环境下数据完全隔离。
+
+## 🛠️ 开发环境
+
+如果你想从源代码运行或进行开发：
+
+### 1. 克隆项目
+```bash
+git clone https://github.com/jom111-111/notebook-app.git
+cd notebook-app
+```
+
+### 2. 安装依赖
 ```bash
 # 创建虚拟环境（推荐）
 python -m venv venv
@@ -32,43 +71,76 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. 运行应用
-
+### 3. 运行应用
 ```bash
+# 桌面应用模式
+python desktop_app.py
+
+# 或Web模式（仅开发用）
 python app.py
 ```
 
-### 3. 访问应用
-
-打开浏览器访问: http://localhost:8080
-
-## 项目结构
+## 📁 项目结构
 
 ```
-记事本/
-├── app.py                 # Flask应用主文件
-├── config.py              # 配置文件
-├── requirements.txt       # Python依赖
+notebook-app/
+├── desktop_app.py          # 桌面应用主文件
+├── app.py                  # Flask Web应用
+├── config.py               # 配置文件
+├── requirements.txt        # Python依赖
+├── notebook_windows.spec   # Windows构建配置
+├── create_icon.py          # 图标生成脚本
 ├── models/
 │   ├── __init__.py
-│   └── note.py           # 笔记数据模型
+│   └── note.py            # 笔记数据模型
 ├── routes/
 │   ├── __init__.py
-│   └── api.py            # API路由
+│   └── api.py             # API路由
 ├── static/
 │   ├── css/
-│   │   └── style.css     # 自定义样式
-│   └── js/
-│       └── app.js        # 主要JavaScript逻辑
+│   │   ├── bootstrap.min.css
+│   │   └── style.css      # 自定义样式
+│   ├── js/
+│   │   ├── bootstrap.bundle.min.js
+│   │   └── app.js         # 主要JavaScript逻辑
+│   └── fonts/             # Font Awesome字体
 ├── templates/
-│   ├── base.html         # 基础模板
-│   └── index.html        # 主页面
-├── database/
-│   └── notes.db          # SQLite数据库文件（自动创建）
+│   ├── base.html          # 基础模板
+│   └── index.html         # 主页面
+├── .github/
+│   └── workflows/
+│       └── build-cross-platform.yml  # 自动构建配置
+├── 记事本.ico              # Windows图标
+├── 记事本.icns             # macOS图标
 └── README.md
 ```
 
-## API 接口
+## 🔨 本地构建
+
+### Windows
+```bash
+python create_icon.py
+pyinstaller notebook_windows.spec --clean --noconfirm
+```
+
+### macOS
+```bash
+pyinstaller desktop_app.py --onefile --windowed --icon=记事本.icns --name=记事本桌面版
+```
+
+构建产物将输出到 `dist/` 目录。
+
+## 🤖 自动化构建
+
+项目使用GitHub Actions自动构建，支持：
+- ✅ Windows可执行文件 (.exe)
+- ✅ macOS应用包 (.app)
+- ✅ 跨平台自动发布
+- ✅ 自动创建GitHub Release
+
+每次推送到main分支都会自动触发构建和发布流程。
+
+## 📡 API 接口
 
 ### 笔记相关
 - `GET /api/notes` - 获取笔记列表
@@ -82,7 +154,7 @@ python app.py
 - `GET /api/notes/tags` - 获取所有标签
 - `GET /api/stats` - 获取统计信息
 
-## 使用说明
+## 📖 使用说明
 
 ### 基本操作
 1. **新建笔记**: 点击"新建笔记"按钮或使用Ctrl+N
@@ -100,7 +172,11 @@ python app.py
 - `Ctrl + S`: 保存当前笔记
 - `Ctrl + N`: 创建新笔记
 
-## 技术栈
+## 🔧 技术栈
+
+### 桌面应用
+- **PyWebView**: Python桌面应用框架
+- **PyInstaller**: 应用打包工具
 
 ### 后端
 - **Flask**: Python Web框架
@@ -113,55 +189,62 @@ python app.py
 - **Bootstrap 5**: UI框架
 - **Font Awesome**: 图标库
 
-## 数据存储
+### 构建和部署
+- **GitHub Actions**: 自动化CI/CD
+- **Cross-platform Build**: 跨平台自动构建
 
-数据存储在SQLite数据库中，位置：`database/notes.db`
+## 🗄️ 数据库结构
 
-数据库会在首次运行时自动创建，包含以下字段：
-- id: 笔记唯一标识
-- title: 笔记标题
-- content: 笔记内容
-- tags: 标签（逗号分隔）
-- is_favorite: 是否收藏
-- created_at: 创建时间
-- updated_at: 更新时间
+SQLite数据库包含以下字段：
+- `id`: 笔记唯一标识
+- `title`: 笔记标题
+- `content`: 笔记内容
+- `tags`: 标签（逗号分隔）
+- `is_favorite`: 是否收藏
+- `created_at`: 创建时间
+- `updated_at`: 更新时间
 
-## 自定义配置
+## 🚀 系统要求
 
-可以通过环境变量或修改`config.py`来自定义配置：
+### Windows
+- Windows 7 或更高版本
+- 无需额外安装Python环境
 
-```python
-# config.py
-SECRET_KEY = 'your-secret-key'  # Flask密钥
-SQLALCHEMY_DATABASE_URI = 'sqlite:///database/notes.db'  # 数据库路径
-```
+### macOS
+- macOS 10.12 或更高版本
+- 无需额外安装Python环境
 
-## 部署建议
+## 🛣️ 发展规划
 
-### 本地开发
-直接运行`python app.py`即可，默认运行在`http://localhost:8080`
-
-### 生产环境
-建议使用Gunicorn等WSGI服务器：
-
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-## 后续扩展计划
-
+- [ ] 多标签页支持
 - [ ] 数据导出功能（PDF、Word、Markdown）
-- [ ] 多用户支持和权限管理
-- [ ] 云端同步功能
 - [ ] 图片和文件附件支持
 - [ ] Markdown预览功能
-- [ ] 协作编辑功能
+- [ ] 主题自定义
+- [ ] 多语言支持
+- [ ] 云端同步功能
 
-## 许可证
+## 📜 许可证
 
 MIT License
 
-## 贡献
+## 🤝 参与贡献
 
-欢迎提交Issue和Pull Request！ 
+欢迎提交Issue和Pull Request！
+
+### 开发流程
+1. Fork本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开Pull Request
+
+## 📞 支持
+
+如果遇到问题或有建议，请：
+- 提交 [GitHub Issue](https://github.com/jom111-111/notebook-app/issues)
+- 查看 [Release页面](https://github.com/jom111-111/notebook-app/releases) 获取最新版本
+
+---
+
+**⭐ 如果这个项目对你有帮助，请给个Star支持一下！** 
