@@ -1,0 +1,185 @@
+name: Build Cross-Platform App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: notebook-windows
+            executable_name: notebook.exe
+            spec_file: notebook_windows.spec
+          - os: macos-latest
+            artifact_name: notebook-macos
+            executable_name: 记事本桌面版
+            spec_file: notebook_macos.spec
+    
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+      actions: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow pywebview
+    
+    - name: Create icon (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        python create_icon.py
+    
+    - name: Create macOS spec file
+      if: matrix.os == 'macos-latest'
+      run: |
+        cat > notebook_macos.spec << 'EOF'
+        # -*- mode: python ; coding: utf-8 -*-
+        import os
+        import sys
+
+        block_cipher = None
+
+        # 获取当前目录
+        current_dir = os.path.dirname(os.path.abspath(SPEC))
+
+        a = Analysis(
+            ['desktop_app.py'],
+            pathex=[current_dir],
+            binaries=[],
+            datas=[
+                ('templates', 'templates'),
+                ('static', 'static'),
+                ('models', 'models'),
+                ('routes', 'routes'),
+                ('config.py', '.'),
+                ('记事本.icns', '.'),
+            ],
+            hiddenimports=['engineio.async_drivers.threading'],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='记事本桌面版',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=False,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements_file=None,
+            icon='记事本.icns',
+        )
+
+        app = BUNDLE(
+            exe,
+            name='记事本.app',
+            icon='记事本.icns',
+            bundle_identifier='com.notebook.app',
+            info_plist={
+                'NSHighResolutionCapable': True,
+                'CFBundleDisplayName': '记事本',
+                'CFBundleName': '记事本',
+                'CFBundleVersion': '1.0.0',
+                'CFBundleShortVersionString': '1.0.0',
+            },
+        )
+        EOF
+    
+    - name: Build Windows executable
+      if: matrix.os == 'windows-latest'
+      run: |
+        pyinstaller notebook_windows.spec --clean --noconfirm
+    
+    - name: Build macOS application
+      if: matrix.os == 'macos-latest'
+      run: |
+        pyinstaller notebook_macos.spec --clean --noconfirm
+    
+    - name: Upload Windows artifact
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: dist/notebook.exe
+        
+    - name: Upload macOS artifact
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: |
+          dist/记事本.app
+          dist/记事本桌面版
+        
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Notebook App v${{ github.run_number }}
+        files: |
+          dist/notebook.exe
+          dist/记事本.app
+          dist/记事本桌面版
+        body: |
+          ## Notebook Application Cross-Platform Release
+          
+          ### Windows Version (notebook.exe)
+          - Standalone executable, no Python installation required
+          - User data isolation
+          - Modern dark theme
+          - Full Chinese language support
+          - Usage: Download and double-click to run
+          - Data stored in %USERPROFILE%\.notebook_app\
+          
+          ### macOS Version (记事本.app / 记事本桌面版)
+          - Native macOS application bundle
+          - User data isolation  
+          - Modern dark theme
+          - Full Chinese language support
+          - Usage: Download and drag to Applications folder
+          - Data stored in ~/.notebook_app/
+          
+          ### Installation
+          - **Windows**: Download notebook.exe and run directly
+          - **macOS**: Download 记事本.app or 记事本桌面版 and run directly
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
