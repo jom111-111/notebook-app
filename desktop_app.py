@@ -116,32 +116,100 @@ class NotebookApp:
 
 def main():
     """Main function"""
-    safe_print("Notebook desktop application starting...")
-    
-    # Check user data directory
-    user_data_dir = Path.home() / '.notebook_app'
-    safe_print("User data directory: " + str(user_data_dir))
-    
+    # Create log file for debugging
+    log_file = None
     try:
+        import tempfile
+        log_file = open(os.path.join(tempfile.gettempdir(), 'notebook_app_debug.log'), 'w', encoding='utf-8')
+        
+        def debug_log(message):
+            try:
+                safe_print(message)
+                if log_file:
+                    log_file.write(message + '\n')
+                    log_file.flush()
+            except:
+                pass
+        
+        debug_log("=== Notebook Desktop Application Debug Log ===")
+        debug_log("Python version: " + sys.version)
+        debug_log("Platform: " + sys.platform)
+        debug_log("Current directory: " + os.getcwd())
+        
+        debug_log("Notebook desktop application starting...")
+        
+        # Check user data directory
+        user_data_dir = Path.home() / '.notebook_app'
+        debug_log("User data directory: " + str(user_data_dir))
+        
+        # Ensure user data directory exists
+        user_data_dir.mkdir(exist_ok=True)
+        debug_log("User data directory created/verified")
+        
+        # Test imports
+        debug_log("Testing imports...")
+        try:
+            import flask
+            debug_log("Flask import: OK")
+        except Exception as e:
+            debug_log("Flask import failed: " + str(e))
+            
+        try:
+            import webview
+            debug_log("PyWebView import: OK")
+        except Exception as e:
+            debug_log("PyWebView import failed: " + str(e))
+            
+        try:
+            from models import db
+            debug_log("Database models import: OK")
+        except Exception as e:
+            debug_log("Database models import failed: " + str(e))
+        
         # Create application instance
+        debug_log("Creating application instance...")
         app = NotebookApp()
+        debug_log("Application instance created")
         
         # Create window
+        debug_log("Creating desktop window...")
         window = app.create_window()
+        debug_log("Desktop window created successfully")
         
-        safe_print("Desktop window created successfully")
-        safe_print("If window doesn't open automatically, please check firewall settings")
-        
+        debug_log("Starting GUI event loop...")
         # Start GUI event loop
         webview.start(debug=False)
+        debug_log("GUI event loop ended")
         
     except Exception as e:
-        safe_print("Startup failed: " + str(e))
+        error_msg = "Startup failed: " + str(e)
+        safe_print(error_msg)
+        if log_file:
+            log_file.write(error_msg + '\n')
+            log_file.write("Exception type: " + str(type(e)) + '\n')
+            import traceback
+            log_file.write("Traceback:\n" + traceback.format_exc() + '\n')
+            log_file.flush()
+        
+        # Show error dialog on Windows
+        if sys.platform == 'win32':
+            try:
+                import ctypes
+                ctypes.windll.user32.MessageBoxW(0, 
+                    "Application failed to start. Check debug log at: " + 
+                    os.path.join(tempfile.gettempdir(), 'notebook_app_debug.log'), 
+                    "Notebook App Error", 1)
+            except:
+                pass
+        
         try:
             input("Press Enter to exit...")
         except:
             pass
         sys.exit(1)
+    finally:
+        if log_file:
+            log_file.close()
 
 if __name__ == '__main__':
     main() 
