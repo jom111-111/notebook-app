@@ -11,66 +11,115 @@ if sys.platform == 'win32':
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 def create_simple_icon():
-    """Create simple Windows icon"""
+    """Create high-quality Windows icon"""
     try:
         from PIL import Image, ImageDraw
         
-        print("Creating application icon...")
+        print("Creating high-quality application icon...")
         
-        # Create 64x64 icon
-        size = 64
-        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        # Create high resolution base image (128x128 is good for ICO)
+        base_size = 128
+        img = Image.new('RGBA', (base_size, base_size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # Draw simple sticky note icon
-        margin = 8
-        paper_color = (255, 215, 0)  # Gold color RGB
-        shadow_color = (184, 134, 11)  # Shadow color RGB
+        # Scale all measurements for higher resolution
+        scale = base_size / 64
+        margin = int(8 * scale)
+        border_width = max(2, int(3 * scale))
+        line_width = max(1, int(2 * scale))
         
-        # Draw shadow (use rectangle for better compatibility)
-        shadow_rect = [margin+2, margin+2, size-margin+2, size-margin+2]
-        draw.rectangle(shadow_rect, fill=shadow_color)
+        # Draw simple sticky note icon with better colors
+        paper_color = (255, 235, 59)  # Brighter yellow
+        border_color = (255, 152, 0)  # Orange border
+        shadow_color = (0, 0, 0, 40)  # Semi-transparent shadow
+        
+        # Draw shadow
+        shadow_offset = int(3 * scale)
+        shadow_rect = [margin + shadow_offset, margin + shadow_offset, 
+                      base_size - margin + shadow_offset, base_size - margin + shadow_offset]
+        shadow_img = Image.new('RGBA', (base_size, base_size), (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(shadow_img)
+        shadow_draw.rectangle(shadow_rect, fill=shadow_color)
+        img = Image.alpha_composite(img, shadow_img)
         
         # Draw sticky note body
-        paper_rect = [margin, margin, size-margin, size-margin]
+        paper_rect = [margin, margin, base_size - margin, base_size - margin]
         draw.rectangle(paper_rect, fill=paper_color)
-        draw.rectangle(paper_rect, outline=(218, 165, 32), width=2)  # Border
+        draw.rectangle(paper_rect, outline=border_color, width=border_width)
         
-        # Draw lines
-        line_color = (205, 133, 63)
-        for i in range(3):
-            y = margin + 12 + i * 8
-            draw.line([margin+6, y, size-margin-6, y], fill=line_color, width=1)
+        # Draw fold corner
+        fold_size = int(16 * scale)
+        fold_points = [
+            (base_size - margin - fold_size, margin),
+            (base_size - margin, margin),
+            (base_size - margin, margin + fold_size),
+            (base_size - margin - fold_size, margin)
+        ]
+        draw.polygon(fold_points, fill=(255, 213, 79))
+        draw.line([base_size - margin - fold_size, margin, 
+                  base_size - margin - fold_size, margin + fold_size], 
+                 fill=border_color, width=border_width)
+        draw.line([base_size - margin - fold_size, margin + fold_size, 
+                  base_size - margin, margin + fold_size], 
+                 fill=border_color, width=border_width)
         
-        # Draw text dots
-        text_color = (139, 69, 19)
-        for i in range(2):
-            y = margin + 16 + i * 8
-            for j in range(4):
-                x = margin + 8 + j * 6
-                draw.ellipse([x, y, x+2, y+2], fill=text_color)
+        # Draw lines on the note
+        line_color = (158, 158, 158)
+        line_count = 5
+        line_start_y = margin + int(24 * scale)
+        line_spacing = int(12 * scale)
+        line_margin = int(16 * scale)
         
-        # Create multi-size icons
-        sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
-        images = []
+        for i in range(line_count):
+            y = line_start_y + i * line_spacing
+            if y < base_size - margin - int(16 * scale):
+                draw.line([margin + line_margin, y, base_size - margin - line_margin, y], 
+                         fill=line_color, width=line_width)
         
-        for ico_size in sizes:
-            if hasattr(Image, 'Resampling'):
-                resized = img.resize(ico_size, Image.Resampling.LANCZOS)
-            else:
-                resized = img.resize(ico_size, Image.LANCZOS)
-            images.append(resized)
+        # Draw text simulation (small rectangles)
+        text_color = (97, 97, 97)
+        text_height = int(6 * scale)
+        text_margin = int(20 * scale)
         
-        # Save Windows icon
-        ico_path = 'notebook.ico'
-        images[0].save(ico_path, format='ICO', sizes=[(img.width, img.height) for img in images])
-        print("Windows icon created: " + ico_path)
+        for i in range(4):
+            y = line_start_y + i * line_spacing - int(2 * scale)
+            if y < base_size - margin - int(16 * scale):
+                # Vary text length
+                text_width = int((30 + (i % 3) * 15) * scale)
+                draw.rectangle([margin + text_margin, y, 
+                              margin + text_margin + text_width, y + text_height], 
+                             fill=text_color)
+        
+        # Save as single high-quality ICO (128x128)
+        ico_path = '记事本.ico'
+        img.save(ico_path, format='ICO')
+        print("High-quality Windows icon created: " + ico_path)
+        
+        # Also create notebook.ico for compatibility
+        notebook_ico_path = 'notebook.ico'
+        img.save(notebook_ico_path, format='ICO')
+        print("Compatibility icon created: " + notebook_ico_path)
+        
+        # Save high-res PNG for other uses
+        png_path = '记事本.png'
+        img.save(png_path, format='PNG')
+        print("High-resolution PNG created: " + png_path)
+        
+        # Create smaller size for efficiency
+        small_img = img.resize((64, 64), Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
+        small_ico_path = '记事本_64.ico'
+        small_img.save(small_ico_path, format='ICO')
+        print("Optimized 64x64 icon created: " + small_ico_path)
         
         # Verify file creation
         if os.path.exists(ico_path):
             file_size = os.path.getsize(ico_path)
-            print("Icon file size: " + str(file_size) + " bytes")
-            return True
+            print("Main icon file size: " + str(file_size) + " bytes")
+            if file_size > 1000:  # Should be larger now
+                return True
+            else:
+                print("Warning: Icon file seems too small")
+                return False
         else:
             print("Error: Icon file was not created")
             return False
@@ -86,7 +135,7 @@ def create_simple_icon():
 if __name__ == '__main__':
     success = create_simple_icon()
     if success:
-        print("Icon creation completed successfully!")
+        print("High-quality icon creation completed successfully!")
         sys.exit(0)
     else:
         print("Icon creation failed!")
