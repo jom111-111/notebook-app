@@ -23,9 +23,6 @@ jobs:
             spec_file: notebook_macos.spec
     
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-      actions: read
     
     steps:
     - uses: actions/checkout@v4
@@ -132,6 +129,12 @@ jobs:
       run: |
         pyinstaller notebook_macos.spec --clean --noconfirm
     
+    - name: Package macOS app
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd dist
+        tar -czf 记事本.app.tar.gz 记事本.app
+    
     - name: Upload Windows artifact
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
@@ -139,31 +142,44 @@ jobs:
         name: ${{ matrix.artifact_name }}
         path: dist/notebook.exe
         
-    - name: Upload macOS artifact
+    - name: Upload macOS artifacts
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
         path: |
-          dist/记事本.app
+          dist/记事本.app.tar.gz
           dist/记事本桌面版
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: notebook-windows
+        path: ./artifacts/windows/
         
-    - name: Package macOS app
-      if: matrix.os == 'macos-latest'
-      run: |
-        cd dist
-        tar -czf 记事本.app.tar.gz 记事本.app
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: notebook-macos
+        path: ./artifacts/macos/
         
     - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ github.run_number }}
         name: Notebook App v${{ github.run_number }}
         files: |
-          dist/notebook.exe
-          dist/记事本.app.tar.gz
-          dist/记事本桌面版
+          artifacts/windows/notebook.exe
+          artifacts/macos/记事本.app.tar.gz
+          artifacts/macos/记事本桌面版
         body: |
           ## Notebook Application Cross-Platform Release
           
@@ -175,17 +191,19 @@ jobs:
           - Usage: Download and double-click to run
           - Data stored in %USERPROFILE%\.notebook_app\
           
-          ### macOS Version (记事本.app / 记事本桌面版)
+          ### macOS Version (记事本.app.tar.gz / 记事本桌面版)
           - Native macOS application bundle
           - User data isolation  
           - Modern dark theme
           - Full Chinese language support
-          - Usage: Download and drag to Applications folder
+          - Usage: 
+            - For .app.tar.gz: Extract and drag to Applications folder
+            - For 记事本桌面版: Download and run directly
           - Data stored in ~/.notebook_app/
           
           ### Installation
           - **Windows**: Download notebook.exe and run directly
-          - **macOS**: Download 记事本.app or 记事本桌面版 and run directly
+          - **macOS**: Download 记事本.app.tar.gz (extract first) or 记事本桌面版 and run directly
         make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
