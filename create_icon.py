@@ -95,26 +95,10 @@ def create_simple_icon():
         img.save(ico_path, format='ICO')
         print("High-quality Windows icon created: " + ico_path)
         
-        # Also create notebook.ico for compatibility
-        notebook_ico_path = 'notebook.ico'
-        img.save(notebook_ico_path, format='ICO')
-        print("Compatibility icon created: " + notebook_ico_path)
-        
-        # Save high-res PNG for other uses
-        png_path = '记事本.png'
-        img.save(png_path, format='PNG')
-        print("High-resolution PNG created: " + png_path)
-        
-        # Create smaller size for efficiency
-        small_img = img.resize((64, 64), Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
-        small_ico_path = '记事本_64.ico'
-        small_img.save(small_ico_path, format='ICO')
-        print("Optimized 64x64 icon created: " + small_ico_path)
-        
         # Verify file creation
         if os.path.exists(ico_path):
             file_size = os.path.getsize(ico_path)
-            print("Main icon file size: " + str(file_size) + " bytes")
+            print("Icon file size: " + str(file_size) + " bytes")
             if file_size > 1000:  # Should be larger now
                 return True
             else:
