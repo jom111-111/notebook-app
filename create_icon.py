@@ -55,9 +55,17 @@ try:
             images.append(resized)
         
         # Windows图标 (.ico)
-        ico_path = '记事本.ico'
+        ico_path = 'notebook.ico'
         images[0].save(ico_path, format='ICO', sizes=[(img.width, img.height) for img in images])
         print(f"✅ Windows图标已创建: {ico_path}")
+        
+        # 同时创建中文名称的图标（用于本地开发）
+        try:
+            ico_path_cn = '记事本.ico'
+            images[0].save(ico_path_cn, format='ICO', sizes=[(img.width, img.height) for img in images])
+            print(f"✅ 中文图标已创建: {ico_path_cn}")
+        except:
+            pass  # 在某些环境中可能无法创建中文文件名
         
         # macOS图标 (.icns) - 如果系统支持
         try:

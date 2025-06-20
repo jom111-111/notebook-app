@@ -27,44 +27,17 @@ jobs:
     
     - name: Create Windows icon
       run: |
-        python -c "
-        from PIL import Image, ImageDraw
-        size = 64
-        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-        margin = 8
-        paper_color = '#FFD700'
-        shadow_color = '#B8860B'
-        shadow_rect = [margin+2, margin+2, size-margin+2, size-margin+2]
-        draw.rounded_rectangle(shadow_rect, radius=4, fill=shadow_color)
-        paper_rect = [margin, margin, size-margin, size-margin]
-        draw.rounded_rectangle(paper_rect, radius=4, fill=paper_color)
-        draw.rounded_rectangle(paper_rect, radius=4, outline='#DAA520', width=2)
-        line_color = '#CD853F'
-        for i in range(3):
-            y = margin + 12 + i * 8
-            draw.line([margin+6, y, size-margin-6, y], fill=line_color, width=1)
-        text_color = '#8B4513'
-        for i in range(2):
-            y = margin + 16 + i * 8
-            for j in range(4):
-                x = margin + 8 + j * 6
-                draw.ellipse([x, y, x+2, y+2], fill=text_color)
-        sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
-        images = [img.resize(ico_size, Image.Resampling.LANCZOS) for ico_size in sizes]
-        images[0].save('记事本.ico', format='ICO', sizes=[(img.width, img.height) for img in images])
-        print('Windows图标已创建')
-        "
+        python create_icon.py
     
     - name: Build Windows executable
       run: |
-        pyinstaller 记事本_windows.spec --clean --noconfirm
+        pyinstaller notebook_windows.spec --clean --noconfirm
     
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4
       with:
         name: notebook-windows-exe
-        path: dist/记事本.exe
+        path: dist/notebook.exe
         
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -73,7 +46,7 @@ jobs:
         tag_name: v${{ github.run_number }}
         name: 记事本应用 v${{ github.run_number }}
         files: |
-          dist/记事本.exe
+          dist/notebook.exe
         body: |
           ## 📝 记事本应用 Windows版本
           
