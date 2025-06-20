@@ -1,98 +1,93 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-创建应用图标 (支持Windows和macOS)
-"""
 
-try:
-    from PIL import Image, ImageDraw
-    import os
-    import sys
-    
-    def create_icon():
-        """创建应用图标"""
-        print("🎨 正在创建应用图标...")
+import sys
+import os
+
+# 设置Windows环境的UTF-8编码
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+def create_simple_icon():
+    """Create simple Windows icon"""
+    try:
+        from PIL import Image, ImageDraw
         
-        # 创建64x64的图标
+        print("Creating application icon...")
+        
+        # Create 64x64 icon
         size = 64
         img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # 绘制便签纸
+        # Draw simple sticky note icon
         margin = 8
-        paper_color = '#FFD700'  # 金黄色
-        shadow_color = '#B8860B'  # 阴影色
+        paper_color = (255, 215, 0)  # Gold color RGB
+        shadow_color = (184, 134, 11)  # Shadow color RGB
         
-        # 阴影
+        # Draw shadow (use rectangle for better compatibility)
         shadow_rect = [margin+2, margin+2, size-margin+2, size-margin+2]
-        draw.rounded_rectangle(shadow_rect, radius=4, fill=shadow_color)
+        draw.rectangle(shadow_rect, fill=shadow_color)
         
-        # 便签纸主体
+        # Draw sticky note body
         paper_rect = [margin, margin, size-margin, size-margin]
-        draw.rounded_rectangle(paper_rect, radius=4, fill=paper_color)
-        draw.rounded_rectangle(paper_rect, radius=4, outline='#DAA520', width=2)
+        draw.rectangle(paper_rect, fill=paper_color)
+        draw.rectangle(paper_rect, outline=(218, 165, 32), width=2)  # Border
         
-        # 横线
-        line_color = '#CD853F'
+        # Draw lines
+        line_color = (205, 133, 63)
         for i in range(3):
             y = margin + 12 + i * 8
             draw.line([margin+6, y, size-margin-6, y], fill=line_color, width=1)
         
-        # 文字点
-        text_color = '#8B4513'
+        # Draw text dots
+        text_color = (139, 69, 19)
         for i in range(2):
             y = margin + 16 + i * 8
             for j in range(4):
                 x = margin + 8 + j * 6
                 draw.ellipse([x, y, x+2, y+2], fill=text_color)
         
-        # 保存不同格式的图标
+        # Create multi-size icons
         sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
         images = []
         
         for ico_size in sizes:
-            resized = img.resize(ico_size, Image.Resampling.LANCZOS)
+            if hasattr(Image, 'Resampling'):
+                resized = img.resize(ico_size, Image.Resampling.LANCZOS)
+            else:
+                resized = img.resize(ico_size, Image.LANCZOS)
             images.append(resized)
         
-        # Windows图标 (.ico)
+        # Save Windows icon
         ico_path = 'notebook.ico'
         images[0].save(ico_path, format='ICO', sizes=[(img.width, img.height) for img in images])
-        print(f"✅ Windows图标已创建: {ico_path}")
+        print("Windows icon created: " + ico_path)
         
-        # 同时创建中文名称的图标（用于本地开发）
-        try:
-            ico_path_cn = '记事本.ico'
-            images[0].save(ico_path_cn, format='ICO', sizes=[(img.width, img.height) for img in images])
-            print(f"✅ 中文图标已创建: {ico_path_cn}")
-        except:
-            pass  # 在某些环境中可能无法创建中文文件名
-        
-        # macOS图标 (.icns) - 如果系统支持
-        try:
-            # 保存为PNG然后转换为icns
-            png_path = '记事本_temp.png'
-            img.save(png_path, format='PNG')
+        # Verify file creation
+        if os.path.exists(ico_path):
+            file_size = os.path.getsize(ico_path)
+            print("Icon file size: " + str(file_size) + " bytes")
+            return True
+        else:
+            print("Error: Icon file was not created")
+            return False
             
-            # 尝试使用sips命令转换 (仅macOS)
-            if sys.platform == 'darwin':
-                os.system(f'sips -s format icns {png_path} --out 记事本.icns')
-                os.remove(png_path)
-                print("✅ macOS图标已创建: 记事本.icns")
-            else:
-                os.remove(png_path)
-        except:
-            pass
-        
-        print("🎉 图标创建完成！")
-        return True
-        
-    if __name__ == '__main__':
-        create_icon()
-        
-except ImportError:
-    print("❌ 错误：需要安装Pillow库")
-    print("请运行: pip install Pillow")
-    input("按回车键退出...")
-except Exception as e:
-    print(f"❌ 创建图标时出错: {e}")
-    input("按回车键退出...") 
+    except ImportError as e:
+        print("Import error: " + str(e))
+        print("Please install Pillow: pip install Pillow")
+        return False
+    except Exception as e:
+        print("Error creating icon: " + str(e))
+        return False
+
+if __name__ == '__main__':
+    success = create_simple_icon()
+    if success:
+        print("Icon creation completed successfully!")
+        sys.exit(0)
+    else:
+        print("Icon creation failed!")
+        sys.exit(1) 
