@@ -70,3 +70,5 @@ coverage/
 # Temporary folders
 tmp/
 temp/ 
+# Executable files
+*.exe
